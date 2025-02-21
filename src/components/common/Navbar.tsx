@@ -1,9 +1,10 @@
 // app/components/Navbar.tsx
 "use client";
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Quicksand } from 'next/font/google';
+import { HiX } from 'react-icons/hi';
 
 const quicksand = Quicksand({
   subsets: ['latin'],
@@ -20,6 +21,32 @@ const NavItems = [
 
 export default function Navbar() {
   const [isLoggedIn] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Prevent scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   return (
     <motion.nav
@@ -39,7 +66,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Navigation Items */}
+          {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {NavItems.map((item) => (
@@ -85,16 +112,61 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button className="text-gray-600 transition-all duration-300 ease-in-out transform hover:scale-110 hover:text-primary-blue">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-primary-blue hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-blue"
+            >
+              <span className="sr-only">Open main menu</span>
+              {!isOpen ? (
+                <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              ) : (
+                <HiX className="block h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-white border-t"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {NavItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary-blue hover:bg-gray-50 transition-all duration-200"
+                >
+                  {item.name}
+                </Link>
+              ))}
+              
+              {/* Auth Buttons for Mobile */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button className="w-full mb-2 px-3 py-2 text-center rounded-md text-gray-600 hover:text-primary-blue hover:bg-gray-50 transition-all duration-200">
+                  Login
+                </button>
+                <button className="w-full px-3 py-2 text-center rounded-md text-white bg-gradient-to-r from-primary-blue to-primary-purple hover:opacity-90 transition-all duration-200">
+                  Register
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }
