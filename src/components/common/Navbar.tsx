@@ -13,10 +13,10 @@ const quicksand = Quicksand({
 
 const NavItems = [
   { name: 'Home', href: '/' },
-  { name: 'About', href: '/about' },
-  { name: 'Services', href: '/services' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'Contact', href: '/contact' },
+  { name: 'Gamification', href: '/gamification' },
+  { name: 'Rest Hub', href: '/resthub' },
+  { name: 'Tale Ai', href: '/taleai' },
+  { name: 'Community', href: '/community' },
 ];
 
 export default function Navbar() {
@@ -52,7 +52,7 @@ export default function Navbar() {
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`fixed w-full z-50 bg-[#F5F5F5] shadow-sm ${quicksand.variable}`}
+      className={`${quicksand.variable} font-sans sticky top-0 w-full z-50 bg-white border-b border-gray-200`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
