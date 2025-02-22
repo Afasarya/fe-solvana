@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { HiMail, HiLockClosed, HiArrowLeft } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiArrowLeft, HiUser, HiPhone } from 'react-icons/hi';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/auth';
+import { useRouter } from 'next/navigation';
 
 const sliderImages = [
   '/images/mental-health-1.jpg',
@@ -33,7 +36,79 @@ const RegisterHeader = () => (
 );
 
 export default function Register() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    whatsappNumber: ''
+  });
+
+  const validateWhatsappNumber = (number: string) => {
+    const whatsappRegex = /^62\d{9,12}$/;
+    return whatsappRegex.test(number);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Handle WhatsApp number formatting
+    if (e.target.name === 'whatsappNumber') {
+      // Remove any non-digit characters
+      value = value.replace(/\D/g, '');
+      
+      // Ensure it starts with 62
+      if (!value.startsWith('62') && value.length > 0) {
+        value = '62' + value;
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    // Validate WhatsApp number
+    if (!validateWhatsappNumber(formData.whatsappNumber)) {
+      setError('WhatsApp number must start with 62 and be 11-14 digits long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await authService.register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        whatsappNumber: formData.whatsappNumber
+      });
+
+      await login(response.token, response.user);
+      router.push('/completed-profile');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -116,11 +191,38 @@ export default function Register() {
                   Sign in
                 </Link>
               </p>
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg mt-4">
+                  {error}
+                </div>
+              )}
             </div>
 
-            <form className="space-y-4 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="space-y-4">
                 {/* Name Field */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <HiUser className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Field */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-1">
                     Email
@@ -134,11 +236,38 @@ export default function Register() {
                       name="email"
                       type="email"
                       required
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300"
                       placeholder="Enter your email"
                     />
                   </div>
                 </div>
+
+                <div>
+    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-600 mb-1">
+      WhatsApp Number
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <HiPhone className="h-5 w-5 text-gray-400" />
+      </div>
+      <input
+        id="whatsappNumber"
+        name="whatsappNumber"
+        type="tel"
+        required
+        value={formData.whatsappNumber}
+        onChange={handleChange}
+        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300"
+        placeholder="62812345678"
+        pattern="^62\d{9,12}$"
+      />
+    </div>
+    <p className="mt-1 text-sm text-gray-500">
+      Must start with 62 (Indonesia code)
+    </p>
+  </div> 
 
                 {/* Password Field */}
                 <div>
@@ -154,6 +283,8 @@ export default function Register() {
                       name="password"
                       type="password"
                       required
+                      value={formData.password}
+                      onChange={handleChange}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                       placeholder="Create a password"
                     />
@@ -174,6 +305,8 @@ export default function Register() {
                       name="confirmPassword"
                       type="password"
                       required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                       placeholder="Confirm your password"
                     />
@@ -183,9 +316,12 @@ export default function Register() {
 
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-primary-blue to-primary-purple hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-blue transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-primary-blue to-primary-purple hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-blue transition-all duration-300 ${
+                  loading ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
