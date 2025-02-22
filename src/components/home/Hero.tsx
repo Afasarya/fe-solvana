@@ -6,24 +6,11 @@ import Link from 'next/link';
 
 export default function Hero() {
   return (
-    <div className="relative min-h-screen bg-white flex items-center">
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.05 }}
-          transition={{ duration: 1 }}
-          className="absolute top-20 left-10 w-72 h-72 bg-primary-blue rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.05 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="absolute bottom-20 right-10 w-72 h-72 bg-primary-purple rounded-full blur-3xl"
-        />
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div className="relative min-h-screen bg-white flex items-center overflow-hidden">
+{/* Main Content */}
+<div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Text Content */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -35,13 +22,14 @@ export default function Hero() {
                 Your Journey to Better
               </span>
               <br />
-              <span className="text-gray-800"> {/* Changed from default to explicit dark color */}
+              <span className="text-gray-800">
                 Mental Health Starts Here
               </span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-8">
               Join Solvana and discover a supportive path to emotional well-being through interactive experiences and personalized care.
             </p>
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -63,68 +51,30 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
+          {/* Single Large Floating Image */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="relative"
+            className="relative flex justify-center items-center"
           >
-            <div className="relative w-full aspect-square max-w-lg mx-auto">
-              <motion.div
-                animate={{ 
-                  y: [-10, 10, -10], 
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 4,
-                  ease: "easeInOut"
-                }}
+            <motion.div
+              animate={{ 
+                y: [-20, 20, -20],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 6,
+                ease: "easeInOut"
+              }}
+              className="relative w-[500px] h-[500px] md:w-[600px] md:h-[600px] lg:w-[700px] lg:h-[700px]"
               >
-                <Image
-                  src="/illustrations/hero-illustration.svg"
-                  alt="Mental Health Illustration"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </motion.div>
-            </div>
-
-            <motion.div
-              animate={{ 
-                y: [-5, 5, -5], 
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 3,
-                ease: "easeInOut"
-              }}
-              className="absolute top-0 right-0 w-20 h-20 text-primary-purple opacity-50"
-            >
               <Image
-                src="/illustrations/shape-1.svg"
-                alt="Decorative Shape"
+                src="/images/image-hero.png"
+                alt="Mental Health Illustration"
                 fill
                 className="object-contain"
-              />
-            </motion.div>
-            
-            <motion.div
-              animate={{ 
-                y: [5, -5, 5], 
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 3.5,
-                ease: "easeInOut"
-              }}
-              className="absolute bottom-0 left-0 w-16 h-16 text-primary-blue opacity-50"
-            >
-              <Image
-                src="/illustrations/shape-2.svg"
-                alt="Decorative Shape"
-                fill
-                className="object-contain"
+                priority
               />
             </motion.div>
           </motion.div>
