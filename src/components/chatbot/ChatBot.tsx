@@ -1,70 +1,65 @@
-// components/chatbot/ChatBot.tsx
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiPaperClip, HiPaperAirplane, HiVolumeUp, HiChat } from 'react-icons/hi';
-
-interface Message {
-  id: string;
-  text: string;
-  isBot: boolean;
-  timestamp: Date;
-  hasAudio?: boolean;
-}
+import { HiPaperAirplane, HiChat, HiTranslate } from 'react-icons/hi';
+import { aiService } from '@/services/ai';
+import { ChatMessage } from '@/types/ai';
 
 export default function ChatBot() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'id'>('en');
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        const history = await aiService.getChatHistory();
+        setMessages(history);
+      } catch (error) {
+        console.error('Failed to fetch chat history:', error);
+      }
+    };
+    fetchChatHistory();
+  }, []);
 
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isLoading) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      isBot: false,
-      timestamp: new Date()
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      content: inputText,
+      role: 'user',
+      language,
+      createdAt: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputText('');
-    setIsTyping(true);
+    setIsLoading(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I'm here to help you. Feel free to share what's on your mind.",
-        isBot: true,
-        timestamp: new Date(),
-        hasAudio: true
+    try {
+      const response = await aiService.sendMessage(inputText, language);
+      
+      const botMessage: ChatMessage = {
+        id: Date.now() + 1,
+        content: response.message,
+        role: 'assistant',
+        language,
+        createdAt: new Date().toISOString()
       };
-      setMessages(prev => [...prev, botResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
 
-  const handleTextToSpeech = (messageId: string, text: string) => {
-    if (activeSpeech === messageId) {
-      // Stop speaking if already active
-      window.speechSynthesis.cancel();
-      setActiveSpeech(null);
-    } else {
-      // Start new speech
-      window.speechSynthesis.cancel(); // Cancel any ongoing speech
-      const speech = new SpeechSynthesisUtterance(text);
-      speech.onend = () => setActiveSpeech(null);
-      window.speechSynthesis.speak(speech);
-      setActiveSpeech(messageId);
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleFileAttachment = () => {
-    fileInputRef.current?.click();
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'en' ? 'id' : 'en');
   };
 
   useEffect(() => {
@@ -82,19 +77,33 @@ export default function ChatBot() {
         className="bg-gradient-to-r from-primary-blue to-primary-purple text-white py-8"
       >
         <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-center space-x-4">
-            <HiChat className="w-12 h-12" />
-            <div className="text-center">
-              <h1 className="text-2xl md:text-3xl font-bold">Got a problem?
-              </h1>
-              <p className="text-lg opacity-90">Just tell me here, AI is ready to accompany you</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <HiChat className="w-12 h-12" />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  {language === 'en' ? 'Got a problem?' : 'Ada masalah?'}
+                </h1>
+                <p className="text-lg opacity-90">
+                  {language === 'en' 
+                    ? 'Just tell me here, AI is ready to accompany you'
+                    : 'Ceritakan saja, AI siap menemani kamu'}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+            >
+              <HiTranslate className="w-5 h-5" />
+              <span>{language.toUpperCase()}</span>
+            </button>
           </div>
         </div>
       </motion.div>
 
       {/* Chat Container */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl text-gray-700 mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,33 +121,23 @@ export default function ChatBot() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
+                  className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                 >
                   <div
                     className={`max-w-[80%] p-4 rounded-2xl ${
-                      message.isBot
+                      message.role === 'assistant'
                         ? 'bg-gray-100 text-gray-800'
                         : 'bg-gradient-to-r from-primary-blue to-primary-purple text-white'
                     }`}
                   >
-                    <p>{message.text}</p>
-                    {message.hasAudio && (
-                      <button
-                        onClick={() => handleTextToSpeech(message.id, message.text)}
-                        className="mt-2 text-sm opacity-80 hover:opacity-100 flex items-center space-x-1"
-                      >
-                        <HiVolumeUp 
-                          className={`w-5 h-5 ${
-                            activeSpeech === message.id ? 'text-primary-blue' : ''
-                          }`} 
-                        />
-                        <span>{activeSpeech === message.id ? 'Stop' : 'Play'}</span>
-                      </button>
-                    )}
+                    <p>{message.content}</p>
+                    <span className="text-xs opacity-50 mt-2 block">
+                      {new Date(message.createdAt).toLocaleTimeString()}
+                    </span>
                   </div>
                 </motion.div>
               ))}
-              {isTyping && (
+              {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -159,29 +158,20 @@ export default function ChatBot() {
           {/* Input Area */}
           <div className="border-t p-4">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={handleFileAttachment}
-                className="text-gray-500 hover:text-primary-blue transition-colors"
-              >
-                <HiPaperClip className="w-6 h-6" />
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={(e) => console.log(e.target.files)}
-              />
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Type your message here..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent outline-none text-gray-900 placeholder-gray-500"
+                placeholder={language === 'en' ? "Type your message here..." : "Ketik pesanmu di sini..."}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent outline-none"
               />
               <button
                 onClick={handleSend}
-                className="bg-gradient-to-r from-primary-blue to-primary-purple text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+                disabled={isLoading}
+                className={`bg-gradient-to-r from-primary-blue to-primary-purple text-white p-2 rounded-lg transition-opacity ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+                }`}
               >
                 <HiPaperAirplane className="w-6 h-6" />
               </button>

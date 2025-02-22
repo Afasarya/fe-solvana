@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Home,
 } from 'lucide-react';
 
 interface MenuItem {
@@ -23,10 +24,11 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
-  { name: 'Badges', href: '/badges', icon: <Award size={20} /> },
-  { name: 'Diary', href: '/diary', icon: <BookOpen size={20} /> },
-  { name: 'Analyze', href: '/analyze', icon: <BarChart2 size={20} /> },
-  { name: 'Settings', href: '/settings', icon: <Settings size={20} /> },
+  { name: 'Badges', href: '/dashboard/badges', icon: <Award size={20} /> },
+  { name: 'Diary', href: '/dashboard/diary', icon: <BookOpen size={20} /> },
+  { name: 'Analyze', href: '/dashboard/analyze', icon: <BarChart2 size={20} /> },
+  { name: 'Settings', href: '/dashboard/settings', icon: <Settings size={20} /> },
+  { name: 'Back Home', href: '/', icon: <Home size={20} /> },
 ];
 
 interface SidebarProps {

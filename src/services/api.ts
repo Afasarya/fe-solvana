@@ -1,41 +1,30 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
 });
 
-// Add request interceptor for debugging
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    console.log('API Request:', {
-      url: config.url,
-      method: config.method,
-      data: config.data
-    });
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+export const getDashboardStats = async () => {
+  const [petResponse, diaryResponse, moodResponse] = await Promise.all([
+    api.get('/pet/status'),
+    api.get('/diary'),
+    api.get('/mood/history?timeframe=today'),
+  ]);
+
+  return {
+    currentStreak: petResponse.data.streak,
+    diaryCount: diaryResponse.data.pagination.totalEntries,
+    currentMood: moodResponse.data.moods[0]?.type || 'NEUTRAL',
+    questionnaire: 0, // This will be implemented later
+  };
+};
 
 export default api;

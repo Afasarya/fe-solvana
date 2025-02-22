@@ -1,256 +1,157 @@
-// app/questioner/page.tsx
 "use client";
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HiArrowLeft, HiArrowRight } from 'react-icons/hi';
-
-interface Question {
-  id: number;
-  title: string;
-  subtitle: string;
-  type: string;
-}
-
-const questions: Question[] = [
-  {
-    id: 1,
-    title: "How old are you?",
-    subtitle: "This helps us personalize your experience",
-    type: "number",
-  },
-  {
-    id: 2,
-    title: "What's your daily routine?",
-    subtitle: "Tell us about your sleep schedule",
-    type: "time",
-  },
-  {
-    id: 3,
-    title: "What are your hobbies?",
-    subtitle: "Share activities that bring you joy",
-    type: "text",
-  },
-  {
-    id: 4,
-    title: "What improves your mood?",
-    subtitle: "Tell us what makes you feel better",
-    type: "textarea",
-  },
-];
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { questionnaireService } from '@/services/questionnaire';
+import { Question } from '@/types/questionnaire';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Questioner() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [answers, setAnswers] = useState({
-    age: '',
-    wakeTime: '',
-    sleepTime: '',
-    hobbies: '',
-    moodBooster: '',
-  });
+  const router = useRouter();
+  const { user } = useAuth();
+  const [questions, setQuestions] = useState<Record<string, Question>>({});
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleNext = () => {
-    if (currentStep < questions.length) {
-      setCurrentStep(currentStep + 1);
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const data = await questionnaireService.getQuestions();
+        setQuestions(data);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to load questions');
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  const handleAnswer = (questionId: string, value: number) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+
+    if (currentQuestion < Object.keys(questions).length - 1) {
+      setCurrentQuestion(prev => prev + 1);
     }
   };
 
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+  const handleSubmit = async () => {
+    if (Object.keys(answers).length !== Object.keys(questions).length) {
+      setError('Please answer all questions');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await questionnaireService.submitQuestionnaire(answers);
+      router.push('/dashboard');
+    } catch (err) {
+      setError('Failed to submit questionnaire');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const updateAnswer = (field: string, value: string) => {
-    setAnswers({ ...answers, [field]: value });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
+  const currentQuestionId = Object.keys(questions)[currentQuestion];
+  const currentQuestionData = questions[currentQuestionId];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col">
-      <main className="flex-1 container mx-auto px-4 pt-20 pb-8">
-      {/* Progress Container */}
-        <div className="max-w-4xl mx-auto mb-8">
-          {/* Step Indicators */}
-          <div className="relative flex justify-center items-center mb-6">
-            {questions.map((q, index) => (
-              <div key={q.id} className="flex items-center">
-                <motion.div
-                  className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    currentStep === q.id
-                      ? 'bg-gradient-to-r from-primary-blue to-primary-purple'
-                      : currentStep > q.id
-                      ? 'bg-primary-blue'
-                      : 'bg-gray-200'
-                  }`}
-                  animate={{
-                    scale: currentStep === q.id ? 1.2 : 1,
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {currentStep > q.id && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="w-2 h-2 bg-white rounded-full"
-                    />
-                  )}
-                </motion.div>
-                {index < questions.length - 1 && (
-                  <div 
-                    className={`w-16 h-0.5 mx-1 ${
-                      currentStep > q.id + 1
-                        ? 'bg-primary-blue'
-                        : currentStep === q.id + 1
-                        ? 'bg-gradient-to-r from-primary-blue to-gray-200'
-                        : 'bg-gray-200'
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white shadow rounded-lg p-6 md:p-8">
           {/* Progress Bar */}
-          <div className="relative h-1 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-blue to-primary-purple"
-              initial={{ width: '0%' }}
-              animate={{ 
-                width: `${((currentStep - 1) / (questions.length - 1)) * 100}%` 
-              }}
-              transition={{ duration: 0.3 }}
-            />
+          <div className="mb-8">
+            <div className="h-2 bg-gray-200 rounded-full">
+              <div 
+                className="h-full bg-primary-blue rounded-full transition-all duration-300"
+                style={{ width: `${(currentQuestion / Object.keys(questions).length) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">
+              Question {currentQuestion + 1} of {Object.keys(questions).length}
+            </p>
           </div>
-        </div>
 
-        {/* Question Card */}
-        <motion.div
-          className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="p-6 md:p-8">
-            <AnimatePresence mode='wait'>
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                {/* Question Header */}
-                <div className="space-y-3 text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-blue to-primary-purple bg-clip-text text-transparent">
-                    {questions[currentStep - 1].title}
-                  </h2>
-                  <p className="text-gray-600">
-                    {questions[currentStep - 1].subtitle}
-                  </p>
-                </div>
-
-                {/* Input Fields */}
-                <div className="mt-8">
-                  {currentStep === 1 && (
-                    <div className="space-y-4">
-                      <input
-                        type="number"
-                        placeholder="Enter your age"
-                        value={answers.age}
-                        onChange={(e) => updateAnswer('age', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
-                        min="0"
-                        max="120"
-                      />
-                    </div>
-                  )}
-
-                  {currentStep === 2 && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Wake up time
-                          </label>
-                          <input
-                            type="time"
-                            value={answers.wakeTime}
-                            onChange={(e) => updateAnswer('wakeTime', e.target.value)}
-                            className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 text-gray-900"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Bedtime
-                          </label>
-                          <input
-                            type="time"
-                            value={answers.sleepTime}
-                            onChange={(e) => updateAnswer('sleepTime', e.target.value)}
-                            className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 text-gray-900"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentStep === 3 && (
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="What do you love to do?"
-                        value={answers.hobbies}
-                        onChange={(e) => updateAnswer('hobbies', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
-                      />
-                    </div>
-                  )}
-
-                  {currentStep === 4 && (
-                    <div className="space-y-4">
-                      <textarea
-                        rows={4}
-                        placeholder="Share what makes you feel better..."
-                        value={answers.moodBooster}
-                        onChange={(e) => updateAnswer('moodBooster', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 resize-none text-gray-900 placeholder-gray-500"
-                      />
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-4 border-t border-gray-100">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handlePrevious}
-                className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl ${
-                  currentStep === 1
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'text-gray-600 hover:text-primary-blue'
-                }`}
-                disabled={currentStep === 1}
-              >
-                <HiArrowLeft className="w-5 h-5" />
-                <span>Previous</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={currentStep === questions.length ? () => console.log(answers) : handleNext}
-                className="flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-blue to-primary-purple text-white"
-              >
-                <span>{currentStep === questions.length ? 'Submit' : 'Next'}</span>
-                {currentStep !== questions.length && <HiArrowRight className="w-5 h-5" />}
-              </motion.button>
+          {/* Question */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              {currentQuestionData?.question}
+            </h2>
+            
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  onClick={() => handleAnswer(currentQuestionId, value)}
+                  className={`w-full p-4 text-left rounded-lg border transition-all duration-200 ${
+                    answers[currentQuestionId] === value
+                      ? 'border-primary-blue bg-blue-50'
+                      : 'border-gray-200 hover:border-primary-blue hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center">
+                      {value}
+                    </span>
+                    <span className="flex-grow">
+                      {currentQuestionData?.scale[value as 1|2|3|4|5]}
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
-        </motion.div>
-      </main>
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+              disabled={currentQuestion === 0}
+              className="px-4 py-2 text-gray-600 disabled:opacity-50"
+            >
+              Previous
+            </button>
+
+            {currentQuestion === Object.keys(questions).length - 1 ? (
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="px-6 py-2 bg-primary-blue text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setCurrentQuestion(prev => Math.min(Object.keys(questions).length - 1, prev + 1))}
+                disabled={!answers[currentQuestionId]}
+                className="px-4 py-2 text-primary-blue disabled:opacity-50"
+              >
+                Next
+              </button>
+            )}
+          </div>
+
+          {error && (
+            <div className="mt-4 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

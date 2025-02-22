@@ -7,7 +7,6 @@ import Link from "next/link";
 import { HiMail, HiLockClosed, HiArrowLeft } from "react-icons/hi";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
-import type { UserRole } from "@/types/auth";
 import { useRouter } from "next/navigation";
 
 const sliderImages = [
@@ -41,40 +40,46 @@ export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
   const [currentImage, setCurrentImage] = useState(0);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
 
-  const handleRoleBasedRedirect = (role: UserRole) => {
-    switch (role) {
-      case "ADMIN":
-        router.push("/admin");
-        break;
-      case "USER":
-        router.push("/dashboard");
-        break;
-      default:
-        router.push("/dashboard");
-    }
-
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
+    setLoading(true);
 
     try {
-      const response = await authService.login({ email, password });
-      if (response.user) {
-        login(response.token, response.user);
-        handleRoleBasedRedirect(response.user.role);
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
+
+      await login(response.token, response.user);
+      
+      // Redirect based on user role
+      if (response.user.role === 'ADMIN') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % sliderImages.length);
@@ -184,8 +189,8 @@ export default function Login() {
                       required
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                       placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={formData.email}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
@@ -208,8 +213,8 @@ export default function Login() {
                       required
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-blue focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                       placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={formData.password}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
@@ -241,9 +246,12 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-primary-blue to-primary-purple hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-blue transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-primary-blue to-primary-purple hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-blue transition-all duration-300 ${
+                  loading ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
-                Sign in
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
 

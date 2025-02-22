@@ -29,36 +29,24 @@ export const authService = {
 
   register: async (userData: RegisterCredentials): Promise<AuthResponse> => {
     try {
-      const { email, password } = userData;
-      const response = await api.post('/auth/register', { 
-        email, 
-        password,
+      const response = await api.post('/auth/register', {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+        whatsappNumber: userData.whatsappNumber,
         role: 'USER'
       });
       
-      // If the response data is not in expected format, try to normalize it
-      const normalized = {
+      return {
         message: response.data.message || 'Registration successful',
-        token: response.data.token || response.data.access_token || '',
-        user: response.data.user || response.data.userData || null
+        token: response.data.token,
+        user: response.data.user
       };
-
-      // Validate minimum required data
-      if (!normalized.token || !normalized.user) {
-        console.error('Invalid response structure:', response.data);
-        throw new Error('Invalid response from server');
-      }
-
-      return normalized;
     } catch (error) {
-      console.error("Register Error Details:", error);
       if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message 
-          || error.response?.data?.error 
-          || 'Registration failed';
-        throw new Error(errorMessage);
+        throw new Error(error.response?.data?.message || 'Registration failed');
       }
-      throw error; // Re-throw unexpected errors
+      throw error;
     }
   },
 
