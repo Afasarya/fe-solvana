@@ -70,7 +70,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog onClose={onClose} className="relative z-50">
-        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -83,7 +82,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
         </Transition.Child>
 
-        {/* Modal */}
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child
@@ -96,7 +94,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="relative w-full max-w-3xl rounded-2xl bg-black overflow-hidden">
-                {/* Close Button */}
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 z-10 text-white/80 hover:text-white transition-colors"
@@ -104,7 +101,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
                   <HiX className="w-6 h-6" />
                 </button>
 
-                {/* Video Container */}
                 <div className="relative aspect-video">
                   <video
                     ref={videoRef}
@@ -113,7 +109,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
                     onClick={togglePlay}
                   />
 
-                  {/* Play/Pause Overlay */}
                   <AnimatePresence>
                     {!isPlaying && (
                       <motion.button
@@ -130,7 +125,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
                     )}
                   </AnimatePresence>
 
-                  {/* Completion Animation */}
                   <AnimatePresence>
                     {showCompletion && (
                       <motion.div
@@ -150,9 +144,7 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
                     )}
                   </AnimatePresence>
 
-                  {/* Controls */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    {/* Progress Bar */}
                     <div 
                       className="h-1 bg-white/20 rounded-full cursor-pointer mb-4"
                       onClick={handleProgressClick}
@@ -164,7 +156,6 @@ export default function VideoPlayer({ videoUrl, onComplete, isOpen, onClose }: V
                       />
                     </div>
 
-                    {/* Controls Row */}
                     <div className="flex items-center space-x-4">
                       <button
                         onClick={togglePlay}

@@ -62,7 +62,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
-      {/* Pet Container */}
       <motion.div
         animate={{ y: [0, -10, 0] }}
         transition={{ 
@@ -72,10 +71,8 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
         }}
         className="relative"
       >
-        {/* Stage Glow Effect */}
         <div className={`absolute inset-0 blur-2xl opacity-20 bg-gradient-to-r ${stageColors[pet.stage as keyof typeof stageColors]}`} />
         
-        {/* Pet Image */}
         <div className="relative w-48 h-48 mx-auto">
           <Image
             src={pet.imageUrl}
@@ -85,7 +82,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           />
         </div>
 
-        {/* Level Up Particles */}
         <AnimatePresence>
           {showParticles && (
             <div className="absolute inset-0">
@@ -97,13 +93,11 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Pet Info */}
       <div className="mt-6 text-center">
         <h3 className="text-xl font-bold bg-gradient-to-r from-primary-blue to-primary-purple bg-clip-text text-transparent">
           {pet.name}
         </h3>
         
-        {/* Level Badge */}
         <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-400/20 backdrop-blur-sm">
           <HiSparkles className="w-4 h-4 text-yellow-400 mr-1" />
           <span className="text-sm font-medium text-yellow-500">
@@ -111,7 +105,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           </span>
         </div>
 
-        {/* Stage Indicators */}
         <div className="flex justify-center gap-2 mt-4">
           {[...Array(pet.totalStages)].map((_, index) => (
             <motion.div
@@ -128,7 +121,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           ))}
         </div>
 
-        {/* Exp Bar */}
         <div className="mt-4 px-4">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600">EXP</span>

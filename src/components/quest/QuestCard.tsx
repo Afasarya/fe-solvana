@@ -28,13 +28,10 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
       whileHover={{ scale: 1.02 }}
       className="relative group"
     >
-      {/* Gradient Border Container */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary-blue to-primary-purple rounded-2xl blur opacity-25 group-hover:opacity-100 transition-opacity duration-300" />
       
-      {/* Main Card */}
       <div className="relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-lg">
         <div className="p-6">
-          {/* Streak Badge */}
           <div className="absolute top-4 right-4 flex items-center space-x-1 bg-yellow-400/20 backdrop-blur-sm px-3 py-1 rounded-full">
             <HiStar className="w-4 h-4 text-yellow-400" />
             <span className="text-sm font-semibold text-yellow-600">
@@ -42,7 +39,6 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
             </span>
           </div>
 
-          {/* Thumbnail */}
           <div className="relative h-48 -mx-6 -mt-6 mb-6">
             <Image
               src={quest.thumbnailUrl}
@@ -64,7 +60,6 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
             )}
           </div>
 
-          {/* Content */}
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary-blue transition-colors duration-300">
@@ -75,7 +70,6 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
               </p>
             </div>
 
-            {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Progress</span>
@@ -93,7 +87,6 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
               </div>
             </div>
 
-            {/* Status */}
             {quest.completed ? (
               <div className="flex items-center space-x-2 text-green-500">
                 <HiCheck className="w-5 h-5" />
@@ -112,7 +105,6 @@ export default function QuestCard({ quest, onComplete }: QuestCardProps) {
           </div>
         </div>
 
-        {/* Video Player */}
         {showVideo && (
           <div className="absolute inset-0 bg-black/90 backdrop-blur-sm">
             <button

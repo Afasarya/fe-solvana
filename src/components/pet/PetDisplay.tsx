@@ -76,7 +76,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
 
   return (
     <div className="relative w-full max-w-sm mx-auto p-6">
-      {/* Pet Container */}
       <motion.div
         animate={{ y: [0, -10, 0] }}
         transition={{
@@ -86,10 +85,8 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
         }}
         className="relative"
       >
-        {/* Glow Effect */}
         <div className={`absolute inset-0 blur-2xl opacity-20 bg-gradient-to-r ${config.color}`} />
 
-        {/* Pet Avatar */}
         <div className="relative w-48 h-48 mx-auto">
           <motion.div
             animate={{ scale: config.scale }}
@@ -104,7 +101,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
             />
           </motion.div>
 
-          {/* Mood Indicator */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -116,19 +112,16 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           </motion.div>
         </div>
 
-        {/* Evolution Effect */}
         <AnimatePresence>
           {isEvolving && <EvolutionParticles />}
         </AnimatePresence>
       </motion.div>
 
-      {/* Pet Info */}
       <div className="mt-6 text-center">
         <h3 className="text-xl font-bold bg-gradient-to-r from-primary-blue to-primary-purple bg-clip-text text-transparent">
           {pet.name}
         </h3>
 
-        {/* Stage Badge */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -140,7 +133,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           </span>
         </motion.div>
 
-        {/* Level Display */}
         <div className="mt-4 flex items-center justify-center space-x-2">
           <HiStar className="w-5 h-5 text-yellow-400" />
           <span className="text-lg font-bold text-gray-800">
@@ -148,7 +140,6 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           </span>
         </div>
 
-        {/* Exp Bar */}
         <div className="mt-4">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600">EXP</span>
