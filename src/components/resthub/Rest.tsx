@@ -28,9 +28,8 @@ const relaxingTracks: Track[] = [
     artist: "Nature Sounds",
     duration: "5:30",
     cover: "/music/ocean-cover.jpg",
-    url: "https://cdn.pixabay.com/download/audio/2025/02/20/audio_4e2471d997.mp3?filename=lofi-hiphop-background-music-303607.mp3",
+    url: "https://www.chosic.com/wp-content/uploads/2022/05/scott-buckley-reverie(chosic.com).mp3",
   },
-  // Add more tracks
 ];
 
 export default function RestHub() {

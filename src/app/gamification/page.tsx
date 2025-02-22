@@ -1,58 +1,78 @@
-// app/gamification/page.tsx
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import PetDisplay from '@/components/pet/PetDisplay';
 import QuestCard from '@/components/quest/QuestCard';
 import { motion } from 'framer-motion';
-
-const samplePet = {
-  name: "Mochi",
-  avatar: "/pets/mochi.png",
-  level: 5,
-  exp: 3, // Streak count
-  maxExp: 7, // Weekly streak target
-  stage: 2 as const,
-  mood: 'happy' as const,
-};
-
-const sampleQuests = [
-  {
-    id: "1",
-    title: "Morning Meditation",
-    description: "Start your day with a 5-minute guided meditation",
-    videoUrl: "/videos/meditation.mp4",
-    thumbnailUrl: "/thumbnails/meditation.jpg",
-    expReward: 1, // +1 streak
-    progress: 0,
-    completed: false,
-  },
-  {
-    id: "2",
-    title: "Breathing Exercise",
-    description: "Learn deep breathing techniques for stress relief",
-    videoUrl: "/videos/breathing.mp4",
-    thumbnailUrl: "/thumbnails/breathing.jpg",
-    expReward: 1, // +1 streak
-    progress: 0,
-    completed: false,
-  },
-  {
-    id: "3",
-    title: "Evening Reflection",
-    description: "End your day with mindful reflection",
-    videoUrl: "/videos/reflection.mp4",
-    thumbnailUrl: "/thumbnails/reflection.jpg",
-    expReward: 1, // +1 streak
-    progress: 0,
-    completed: false,
-  },
-];
+import { gamificationService } from '@/services/gamification';
+import { Pet, Quest } from '@/types/gamification';
+import { useAuth } from '@/context/AuthContext';
 
 export default function GamificationPage() {
-  const [pet, setPet] = useState(samplePet);
-  const [quests, setQuests] = useState(sampleQuests);
+  const { user } = useAuth();
+  const [pet, setPet] = useState<Pet | null>(null);
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [petData, questsData] = await Promise.all([
+          gamificationService.getPetStatus(),
+          gamificationService.getDailyQuests()
+        ]);
+
+        setPet(petData.pet);
+        setQuests(questsData.quests);
+      } catch (err) {
+        setError('Failed to load gamification data');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleQuestComplete = async (questNumber: number) => {
+    try {
+      const result = await gamificationService.completeQuest(questNumber);
+      
+      // Update quests
+      setQuests(prev => prev.map(quest => 
+        quest.questNumber === questNumber 
+          ? { ...quest, status: 'COMPLETED', completedAt: new Date().toISOString() }
+          : quest
+      ));
+
+      // If all quests completed, update pet status
+      if (result.completed) {
+        const petStatus = await gamificationService.getPetStatus();
+        setPet(petStatus.pet);
+      }
+    } catch (err) {
+      console.error('Failed to complete quest:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-blue"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -80,25 +100,18 @@ export default function GamificationPage() {
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Pet Section */}
-          <div className="lg:col-span-1">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-lg p-4 md:p-6"
-            >
-              <PetDisplay 
-                pet={pet}
-                onLevelUp={() => {
-                  setPet(prev => ({
-                    ...prev,
-                    level: prev.level + 1,
-                    exp: 0,
-                  }));
-                }}
-              />
-            </motion.div>
-          </div>
+          {pet && (
+            <div className="lg:col-span-1">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-xl shadow-lg p-4 md:p-6"
+              >
+                <PetDisplay pet={pet} />
+              </motion.div>
+            </div>
+          )}
 
           {/* Quests Section */}
           <div className="lg:col-span-2">
@@ -114,7 +127,9 @@ export default function GamificationPage() {
                 </h2>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Current Streak:</span>
-                  <span className="font-bold text-primary-blue">{pet.exp} days</span>
+                  <span className="font-bold text-primary-blue">
+                    {pet?.currentStreak || 0} days
+                  </span>
                 </div>
               </div>
               
@@ -123,15 +138,7 @@ export default function GamificationPage() {
                   <QuestCard
                     key={quest.id}
                     quest={quest}
-                    onComplete={(questId) => {
-                      setQuests(prev => prev.map(q => 
-                        q.id === questId ? { ...q, completed: true, progress: 100 } : q
-                      ));
-                      setPet(prev => ({
-                        ...prev,
-                        exp: Math.min(prev.exp + 1, prev.maxExp)
-                      }));
-                    }}
+                    onComplete={() => handleQuestComplete(quest.questNumber)}
                   />
                 ))}
               </div>

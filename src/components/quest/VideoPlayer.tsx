@@ -1,4 +1,3 @@
-// components/gamification/VideoPlayer.tsx
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';

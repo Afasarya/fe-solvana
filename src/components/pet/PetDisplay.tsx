@@ -1,119 +1,102 @@
-// components/gamification/PetDisplay.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiSparkles, HiStar, HiHeart } from 'react-icons/hi';
+import { HiSparkles, HiStar } from 'react-icons/hi';
 import Image from 'next/image';
+import { Pet } from '@/types/gamification';
 
 interface PetDisplayProps {
-  pet: {
-    name: string;
-    stage: 1 | 2 | 3;
-    level: number;
-    exp: number;
-    maxExp: number;
-    avatar: string;
-    mood: 'happy' | 'neutral' | 'sad';
-  };
-  onLevelUp?: () => void;
+  pet: Pet;
 }
 
 const stageConfig = {
-  1: {
+  EGG: {
+    image: '/telur-naga.png',
     color: 'from-blue-400 to-blue-600',
-    badge: '🌱 Seedling',
-    scale: 0.8
+    badge: '🥚 Egg Stage',
+    description: 'Your companion is still in its egg. Keep up your daily wellness activities!'
   },
-  2: {
+  BABY: {
+    image: '/telur-menetas.png',
+    color: 'from-green-400 to-green-600',
+    badge: '🐣 Baby Dragon',
+    description: 'Your dragon has hatched! Continue your journey together.'
+  },
+  TEEN: {
+    image: '/naga-sedang.png',
     color: 'from-purple-400 to-purple-600',
-    badge: '🌸 Growing',
-    scale: 1
+    badge: '🐲 Teen Dragon',
+    description: 'Growing stronger each day! Keep up the great work!'
   },
-  3: {
+  ADULT: {
+    image: '/naga-besar.png',
     color: 'from-pink-400 to-pink-600',
-    badge: '🌟 Blooming',
-    scale: 1.2
+    badge: '🐉 Adult Dragon',
+    description: 'Your dragon has reached its final form! Magnificent!'
   }
 };
 
-const EvolutionParticles = () => (
-  <div className="absolute inset-0">
-    {[...Array(12)].map((_, i) => (
-      <motion.div
-        key={i}
-        initial={{ 
-          x: 0, 
-          y: 0, 
-          scale: 0,
-          opacity: 1 
-        }}
-        animate={{
-          x: Math.cos(i * 30) * 100,
-          y: Math.sin(i * 30) * 100,
-          scale: 1.5,
-          opacity: 0
-        }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className="absolute left-1/2 top-1/2 w-2 h-2 rounded-full bg-yellow-400"
-      />
-    ))}
-  </div>
-);
-
-export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
-  const [isEvolving, setIsEvolving] = useState(false);
+export default function PetDisplay({ pet }: PetDisplayProps) {
+  const [showEvolutionEffect, setShowEvolutionEffect] = useState(false);
   const config = stageConfig[pet.stage];
 
   useEffect(() => {
-    if (pet.exp >= pet.maxExp) {
-      setIsEvolving(true);
-      setTimeout(() => {
-        setIsEvolving(false);
-        onLevelUp?.();
-      }, 2000);
+    if (pet.nextEvolution?.progress === 100) {
+      setShowEvolutionEffect(true);
+      const timer = setTimeout(() => setShowEvolutionEffect(false), 2000);
+      return () => clearTimeout(timer);
     }
-  }, [pet.exp, pet.maxExp, onLevelUp]);
+  }, [pet.nextEvolution?.progress]);
+
+  const EvolutionParticles = () => (
+    <div className="absolute inset-0">
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ 
+            x: 0, 
+            y: 0, 
+            scale: 0,
+            opacity: 1 
+          }}
+          animate={{ 
+            x: Math.cos(i * 30) * 100,
+            y: Math.sin(i * 30) * 100,
+            scale: 1.5,
+            opacity: 0
+          }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="absolute left-1/2 top-1/2 w-2 h-2 rounded-full bg-yellow-400"
+        />
+      ))}
+    </div>
+  );
 
   return (
-    <div className="relative w-full max-w-sm mx-auto p-6">
+    <div className="relative w-full max-w-sm mx-auto">
       <motion.div
         animate={{ y: [0, -10, 0] }}
-        transition={{
-          repeat: Infinity,
+        transition={{ 
+          repeat: Infinity, 
           duration: 3,
-          ease: "easeInOut"
+          ease: "easeInOut" 
         }}
         className="relative"
       >
         <div className={`absolute inset-0 blur-2xl opacity-20 bg-gradient-to-r ${config.color}`} />
-
+        
         <div className="relative w-48 h-48 mx-auto">
-          <motion.div
-            animate={{ scale: config.scale }}
-            transition={{ duration: 0.5 }}
-          >
-            <Image
-              src={pet.avatar}
-              alt={pet.name}
-              width={192}
-              height={192}
-              className="object-contain"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-lg"
-          >
-            {pet.mood === 'happy' && <HiHeart className="w-6 h-6 text-pink-500" />}
-            {pet.mood === 'neutral' && <span className="text-2xl">😊</span>}
-            {pet.mood === 'sad' && <span className="text-2xl">😢</span>}
-          </motion.div>
+          <Image
+            src={config.image}
+            alt={pet.name}
+            width={192}
+            height={192}
+            className="object-contain rounded-lg"
+          />
         </div>
 
         <AnimatePresence>
-          {isEvolving && <EvolutionParticles />}
+          {showEvolutionEffect && <EvolutionParticles />}
         </AnimatePresence>
       </motion.div>
 
@@ -133,31 +116,41 @@ export default function PetDisplay({ pet, onLevelUp }: PetDisplayProps) {
           </span>
         </motion.div>
 
+        <p className="mt-2 text-sm text-gray-600">
+          {config.description}
+        </p>
+
         <div className="mt-4 flex items-center justify-center space-x-2">
           <HiStar className="w-5 h-5 text-yellow-400" />
           <span className="text-lg font-bold text-gray-800">
-            Level {pet.level}
+            {pet.currentStreak} Day Streak
           </span>
         </div>
 
-        <div className="mt-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">EXP</span>
-            <span className="font-medium text-primary-blue">
-              {pet.exp}/{pet.maxExp}
-            </span>
+        {pet.nextEvolution && (
+          <div className="mt-4">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600">Next Evolution</span>
+              <span className="font-medium text-primary-blue">
+                {pet.nextEvolution.daysLeft} days left
+              </span>
+            </div>
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pet.nextEvolution.progress}%` }}
+                transition={{ duration: 0.5 }}
+                className={`h-full bg-gradient-to-r ${config.color}`}
+              />
+            </div>
           </div>
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ 
-                width: `${(pet.exp / pet.maxExp) * 100}%`,
-              }}
-              transition={{ duration: 0.5 }}
-              className={`h-full bg-gradient-to-r ${config.color}`}
-            />
+        )}
+
+        {pet.achievements > 0 && (
+          <div className="mt-4 text-sm text-gray-600">
+            🏆 {pet.achievements} Achievements Unlocked
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
